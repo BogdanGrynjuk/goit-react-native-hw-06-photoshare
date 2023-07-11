@@ -17,7 +17,7 @@ export default function PostsScreen() {
   }, [route.params]);
 
   const renderItem = ({ item }) => (
-    <View style={styles.post}>
+    <TouchableOpacity activeOpacity={1} style={styles.post}>
       {/* photo */}
       <View style={styles.photoContainer}>
         <Image source={{ uri: item.photoSource }} style={styles.photo} />
@@ -56,7 +56,7 @@ export default function PostsScreen() {
         </TouchableOpacity>
       </View>
 
-    </View>
+    </TouchableOpacity>
   );  
 
   return (
@@ -73,7 +73,7 @@ export default function PostsScreen() {
         <FlatList
           data={posts}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={renderItem}
+          renderItem={renderItem}         
         />        
 
       </View>

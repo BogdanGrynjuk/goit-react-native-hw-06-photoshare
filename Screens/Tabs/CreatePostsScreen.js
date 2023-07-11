@@ -14,7 +14,6 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Location from 'expo-location';
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 
-
 // import icons
 import { MaterialIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
@@ -26,6 +25,7 @@ export default function CreatePostsScreen({ }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraRef, setCameraRef] = useState(null);
   const [photoSource, setPhotoSource] = useState(null);
+  const [isPreview, setIsPreview] = useState(false);
   const [location, setLocation] = useState(null);
   
   useEffect(() => {
@@ -41,12 +41,15 @@ export default function CreatePostsScreen({ }) {
   const isFocused = useIsFocused();
   const navigation = useNavigation();
 
-  let enabled = label.length > 0 && place.length > 0 && hasPermission;
+  let hasPermissionPublish = label.length > 0 && place.length > 0 && photoSource && location;
 
   const takePhoto = async () => {
     if (cameraRef) {
       const { uri } = await cameraRef.takePictureAsync();
-      if (uri) { setPhotoSource(uri) };
+      if (uri) {
+        setPhotoSource(uri)
+        setIsPreview(true);
+      };
       await MediaLibrary.createAssetAsync(uri);
 
       let location = await Location.getCurrentPositionAsync({});
@@ -58,20 +61,22 @@ export default function CreatePostsScreen({ }) {
     }
   };
 
-  const onSubmit = () => {
+  const onDelete = () => {
     Keyboard.dismiss();
-    if (enabled) {
+    setLabel("");
+    setPlace("");
+    setPhotoSource(null);    
+    setLocation(null);
+    setIsPreview(false);    
+  };
+
+  const onSubmit = () => {
+    onDelete();
+    if (hasPermissionPublish) {
       onDelete();
       navigation.navigate("Posts", {label, place, photoSource, location})      
     }
-  };
-
-  const onDelete = () => {
-    setLabel("");
-    setPlace("");
-    setPhotoSource(null);
-    setLocation(null);
-  };
+  };  
 
   if (hasPermission === null) { return <View /> };
   if (hasPermission === false) { return <Text>Permission to access the camera or location was denied  activeOpacity</Text> };
@@ -88,28 +93,29 @@ export default function CreatePostsScreen({ }) {
               style={styles.camera}
               ref={setCameraRef}
               flashMode={FlashMode.auto}
-            >
-              {photoSource &&
-                <View style={styles.previewPhotoContainer}>
-                  <Image
-                    source={{ uri: photoSource }}
-                    style={{
-                      height: "100%",
-                      width: "100%",
-                      resizeMode: "cover"
-                    }}
-                  />
-
-                </View>
-              }
+            >              
               <TouchableOpacity
                 style={styles.btnSnapshot}
                 activeOpacity={0.8}
-                onPress={takePhoto}
+                onPress={takePhoto}               
               >
                 <MaterialIcons name="photo-camera" size={30} color={"#BDBDBD"} />
               </TouchableOpacity>
+                
             </Camera>
+          }
+          {isPreview &&
+            <View style={styles.previewPhotoContainer}>
+              <Image
+                source={{ uri: photoSource }}
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  resizeMode: "cover"
+                }}
+              />
+            </View>
+            
           }
         </View>
         {/* uploader */}
@@ -157,21 +163,23 @@ export default function CreatePostsScreen({ }) {
           <TouchableOpacity
             style={{
               ...styles.btnForm,
-              backgroundColor: enabled ? "#FF6C00" : "#F6F6F6"
+              backgroundColor: hasPermissionPublish ? "#FF6C00" : "#F6F6F6"
             }}
             activeOpacity={0.8}
             onPress={onSubmit}
-            disabled={!enabled}
+            disabled={!hasPermissionPublish}
           >
             <Text style={{
               ...styles.btnFormTitle,
-              color: enabled ? "#FFFFFF" : "#BDBDBD"
+              color: hasPermissionPublish ? "#FFFFFF" : "#BDBDBD"
             }}>Опублікувати</Text>
           </TouchableOpacity>
 
         </View>
       
       </KeyboardAvoidingView>
+
+      <View style={{flex: 1}}></View>
       
       <TouchableOpacity
         style={{

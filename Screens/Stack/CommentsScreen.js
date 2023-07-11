@@ -14,8 +14,6 @@ import { Feather } from '@expo/vector-icons';
 
 export default function CommentsScreen() {
   const { params: { photoSource } } = useRoute();
-
-  console.log("photoSource: ", photoSource)
   
   return (
     <KeyboardAvoidingView 
