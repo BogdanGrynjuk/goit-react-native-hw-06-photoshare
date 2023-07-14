@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
-import { Camera, FlashMode } from "expo-camera";
+import { Camera, FlashMode, AutoFocus } from "expo-camera";
 import * as MediaLibrary from 'expo-media-library';
 import * as Location from 'expo-location';
 import { useIsFocused, useNavigation } from "@react-navigation/native";
@@ -93,6 +93,7 @@ export default function CreatePostsScreen({ }) {
               style={styles.camera}
               ref={setCameraRef}
               flashMode={FlashMode.auto}
+              AutoFocus={AutoFocus.on}
             >              
               <TouchableOpacity
                 style={styles.btnSnapshot}

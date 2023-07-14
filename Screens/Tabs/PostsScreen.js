@@ -73,7 +73,8 @@ export default function PostsScreen() {
         <FlatList
           data={posts}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={renderItem}         
+          renderItem={renderItem}
+          inverted={true}
         />        
 
       </View>
