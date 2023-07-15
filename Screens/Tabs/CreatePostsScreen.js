@@ -18,6 +18,10 @@ import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
 
+import { nanoid } from "@reduxjs/toolkit";
+import { storage } from "../../firebase/config";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 export default function CreatePostsScreen({ }) {
   
   const [label, setLabel] = useState("");
@@ -37,6 +41,19 @@ export default function CreatePostsScreen({ }) {
       setHasPermission(camera.status === "granted" && location.status ==="granted");
     })();
   }, []);
+
+  const uploadPhotoToServer = async () => {
+    let photoUrl = '';
+    const response = await fetch(photoSource);
+    const file = await response.blob();
+    const uniquePostId = nanoid();
+    const storageRef = ref(storage, `postImage/${uniquePostId}`);
+
+    await uploadBytes(storageRef, file);
+    await getDownloadURL(storageRef).then((url) => {
+      photoUrl = url;
+    });    
+  };
 
   const isFocused = useIsFocused();
   const navigation = useNavigation();
@@ -73,6 +90,7 @@ export default function CreatePostsScreen({ }) {
   const onSubmit = () => {
     onDelete();
     if (hasPermissionPublish) {
+      uploadPhotoToServer();
       onDelete();
       navigation.navigate("Posts", {label, place, photoSource, location})      
     }

@@ -3,8 +3,10 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
 
 import { Feather } from '@expo/vector-icons';
+import { useSelector } from "react-redux";
 
 export default function PostsScreen() {
+  const {login, email} = useSelector(state => state.auth)
   const [posts, setPosts] = useState([]);
 
   const route = useRoute();
@@ -64,8 +66,8 @@ export default function PostsScreen() {
       <View style={styles.header}>
         <View style={styles.wrapPhoto}></View>
         <View>
-          <Text style={styles.textName}>Natali Romanova</Text>
-          <Text style={styles.textEmail}>email@example.com</Text>
+          <Text style={styles.textName}>{login}</Text>
+          <Text style={styles.textEmail}>{email}</Text>
         </View>
       </View>
 
@@ -110,7 +112,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
     lineHeight: 15,
-    textAlign: "center",
     color: "#212121",
   },
 
@@ -119,7 +120,6 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontSize: 12,
     lineHeight: 13,
-    textAlign: "center",
     color: "rgba(33, 33, 33, 0.8)",
   },
 

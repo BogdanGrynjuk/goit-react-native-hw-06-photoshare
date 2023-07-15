@@ -18,12 +18,13 @@ export const authSignUpUser = ({ email, password, login }) =>
       await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(auth.currentUser, { displayName: login });
             
-      const user = auth.currentUser;
+      const user = auth.currentUser;      
 
       if (user) {
         dispatch(updateUserProfile({
           userId: user.uid,
           login: user.displayName,
+          email: user.email
         }));
       };
         
@@ -38,6 +39,11 @@ export const authSignInUser = ({ email, password }) =>
       await signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
           const user = userCredential.user;
+          dispatch(updateUserProfile({
+            userId: user.uid,
+            login: user.displayName,
+            email: user.email
+          }));
           Alert.alert(`Ласкаво просимо ${user.displayName}`)
         });
     } catch (error) {
@@ -64,8 +70,9 @@ export const authStateChangeUser = () =>
         dispatch(updateUserProfile({
           userId: user.uid,
           login: user.displayName,
+          email: user.email
         }));
-        dispatch(authStateChange({ stateChange: true }));
+        dispatch(authStateChange({ stateChange: true }));        
       };
 
     });

@@ -1,4 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+
 import {
   StyleSheet,
   Text,
@@ -11,10 +13,13 @@ import {
 // import icons
 import { Feather } from '@expo/vector-icons';
 
+import { authSignOutUser } from '../../redux/auth/authOpration';
+
 export default function ProfileScreen() {
+  const { login } = useSelector(state => state.auth);
 
-  const navigation = useNavigation();
-
+  const dispatch = useDispatch();
+  
   return (
     <View style={styles.container}>
       {/* background */}
@@ -38,13 +43,13 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.btnLogOut}
             activeOpacity={0.8}
-            onPress={() => navigation.navigate("Login")}
+            onPress={() => dispatch(authSignOutUser())}
           >
             <Feather name="log-out" size={25} color="#BDBDBD" />
           </TouchableOpacity>
 
           <View>
-            <Text style={styles.title}>Natali Romanova</Text>
+            <Text style={styles.title}>{login}</Text>
           </View>
 
         </View>
