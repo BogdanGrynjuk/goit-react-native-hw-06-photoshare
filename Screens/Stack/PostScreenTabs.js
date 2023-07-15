@@ -2,12 +2,14 @@ import { useState } from "react";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from "@react-navigation/native";
 import { TouchableOpacity } from "react-native";
+import { useDispatch } from "react-redux";
 
 import { Feather } from '@expo/vector-icons';
 
 import PostsScreen from "../Tabs/PostsScreen";
 import CreatePostsScreen from "../Tabs/CreatePostsScreen";
 import ProfileScreen from "../Tabs/ProfileScreen";
+import { authSignOutUser } from "../../redux/auth/authOpration";
 
 const Tabs = createBottomTabNavigator();
 
@@ -15,6 +17,7 @@ export default function PostScreenTabs() {
 
   const [isChangedIcon, setIsChangedIcon] = useState(false);
   const navigation = useNavigation();
+  const dispath = useDispatch();
 
   return (
     <Tabs.Navigator
@@ -53,7 +56,7 @@ export default function PostScreenTabs() {
             <TouchableOpacity
               style={{ marginRight: 20 }}
               activeOpacity={0.8}
-              onPress={() => navigation.navigate("Login")}
+              onPress={() => dispath(authSignOutUser())}
             >
               <Feather name="log-out" size={25} color="#BDBDBD" />
             </TouchableOpacity>

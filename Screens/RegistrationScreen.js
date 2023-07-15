@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from "react-redux";
 
 import {
   StyleSheet,
@@ -16,6 +17,8 @@ import {
 
 import { Feather } from '@expo/vector-icons';
 
+import { authSignUpUser } from "../redux/auth/authOpration";
+
 export default function RegistrationScreen() {
 
   const [login, setLogin] = useState("");
@@ -28,14 +31,14 @@ export default function RegistrationScreen() {
   const [isVisiblePassword, setIsVisiblePassword] = useState(false);
 
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   
   const onSubmit = () => {
-    console.log(`login: ${login}, email: ${email}, password: ${password}`);
     setLogin("")
     setEmail("");
     setPassword("");
-    Keyboard.dismiss();
-    navigation.navigate("Home");
+    Keyboard.dismiss();    
+    dispatch(authSignUpUser({ email, password, login }));
   };
   
   return (

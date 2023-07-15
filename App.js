@@ -2,17 +2,12 @@ import 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useFonts } from 'expo-font';
-import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Provider } from "react-redux";
 import { PersistGate } from 'redux-persist/integration/react';
 
-import RegistrationScreen from './Screens/RegistrationScreen';
-import LoginScreen from './Screens/LoginScreen';
-import Home from './Screens/Home';
 import { store, persistor } from './redux/store';
-
-const MainStack = createStackNavigator();
+import Main from './components/Main';
 
 export default function App() {
 
@@ -28,21 +23,15 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <PersistGate loading={null} persistor={ persistor }>
+      <PersistGate loading={null} persistor={persistor}>
         <TouchableWithoutFeedback style={{ flex: 1 }} onPress={() => Keyboard.dismiss()}>
-          <View style={styles.container}>
-            <NavigationContainer>
-              <MainStack.Navigator initialRouteName='Login' screenOptions={{ headerShown: false }}>
-                <MainStack.Screen name='Login' component={LoginScreen} />
-                <MainStack.Screen name='Register' component={RegistrationScreen} />
-                <MainStack.Screen name='Home' component={Home} />
-              </MainStack.Navigator>
-            </NavigationContainer>
+          <View style={styles.container}>            
+            <Main />
             <StatusBar style="auto" />
           </View>
         </TouchableWithoutFeedback>
       </PersistGate>
-    </Provider>    
+    </Provider>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
+import { useDispatch } from "react-redux";
 
 import {
   StyleSheet,
@@ -13,6 +14,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 
+import { authSignInUser } from "../redux/auth/authOpration";
+
 export default function LoginScreen() {
   
   const [email, setEmail] = useState("");
@@ -22,14 +25,14 @@ export default function LoginScreen() {
   const [isFocusedPassword, setIsFocusedPassword] = useState(false);
   const [isVisiblePassword, setIsVisiblePassword] = useState(false);
 
-  const navigation = useNavigation();  
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
 
-  const onSubmit = () => {
-    console.log(`email: ${email}, password: ${password}`);
+  const onSubmit = () => {    
     setEmail('');
     setPassword('');
     Keyboard.dismiss();
-    navigation.navigate("Home", {email: email, password: password});
+    dispatch(authSignInUser({ email, password }));
   }
   
   return (
