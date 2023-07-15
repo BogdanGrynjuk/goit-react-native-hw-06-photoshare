@@ -13,14 +13,16 @@ import { Camera, FlashMode, AutoFocus } from "expo-camera";
 import * as MediaLibrary from 'expo-media-library';
 import * as Location from 'expo-location';
 import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 
 // import icons
 import { MaterialIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
 
 import { nanoid } from "@reduxjs/toolkit";
-import { storage } from "../../firebase/config";
+import { storage, db } from "../../firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc } from "firebase/firestore";
 
 export default function CreatePostsScreen({ }) {
   
@@ -31,6 +33,7 @@ export default function CreatePostsScreen({ }) {
   const [photoSource, setPhotoSource] = useState(null);
   const [isPreview, setIsPreview] = useState(false);
   const [location, setLocation] = useState(null);
+  const {userId, login} = useSelector(state => state.auth)
   
   useEffect(() => {
     (async () => {
@@ -40,20 +43,7 @@ export default function CreatePostsScreen({ }) {
 
       setHasPermission(camera.status === "granted" && location.status ==="granted");
     })();
-  }, []);
-
-  const uploadPhotoToServer = async () => {
-    let photoUrl = '';
-    const response = await fetch(photoSource);
-    const file = await response.blob();
-    const uniquePostId = nanoid();
-    const storageRef = ref(storage, `postImage/${uniquePostId}`);
-
-    await uploadBytes(storageRef, file);
-    await getDownloadURL(storageRef).then((url) => {
-      photoUrl = url;
-    });    
-  };
+  }, []);  
 
   const isFocused = useIsFocused();
   const navigation = useNavigation();
@@ -78,6 +68,37 @@ export default function CreatePostsScreen({ }) {
     }
   };
 
+  const uploadPhotoToServer = async () => {
+    let photoUrl = '';
+    
+    const response = await fetch(photoSource);
+    const file = await response.blob();
+    const uniquePostId = nanoid();
+    const storageRef = ref(storage, `postImage/${uniquePostId}`);
+
+    await uploadBytes(storageRef, file);
+    await getDownloadURL(storageRef).then((url) => {
+      photoUrl = url;
+    }); 
+    
+    return photoUrl;
+  };
+
+  const uploadPostToServer = async () => {
+    const photo = await uploadPhotoToServer();
+
+    try {
+      const docRef = await addDoc(collection(db, "posts"), {
+        photo, label, place, location, userId, login
+      });
+      
+      console.log('Document written with ID: ', docRef.id);
+      
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
+  };
+
   const onDelete = () => {
     Keyboard.dismiss();
     setLabel("");
@@ -90,7 +111,7 @@ export default function CreatePostsScreen({ }) {
   const onSubmit = () => {
     onDelete();
     if (hasPermissionPublish) {
-      uploadPhotoToServer();
+      uploadPostToServer()
       onDelete();
       navigation.navigate("Posts", {label, place, photoSource, location})      
     }
