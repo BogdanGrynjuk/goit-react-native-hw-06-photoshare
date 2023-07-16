@@ -5,24 +5,37 @@ import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from 'react
 import { Feather } from '@expo/vector-icons';
 import { useSelector } from "react-redux";
 
+import { collection, getDocs } from 'firebase/firestore'; 
+import { db } from '../../firebase/config';
+
 export default function PostsScreen() {
   const {login, email} = useSelector(state => state.auth)
   const [posts, setPosts] = useState([]);
 
-  const route = useRoute();
+  const getPosts = async () => {
+    try {
+      const allPosts = [];
+
+      const snapshot = await getDocs(collection(db, 'posts'));
+      snapshot.forEach((doc) => allPosts.push({ ...doc.data(), id: doc.id }));
+
+      setPosts(allPosts);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (route.params) {
-      setPosts(prevState => [...prevState, route.params]);
-    }
-  }, [route.params]);
+    getPosts();
+  }, [posts]);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={1} style={styles.post}>
       {/* photo */}
       <View style={styles.photoContainer}>
-        <Image source={{ uri: item.photoSource }} style={styles.photo} />
+        <Image source={{ uri: item.photo }} style={styles.photo} />
       </View>
       {/* label */}
       <Text style={styles.postLabel}>{item.label}</Text>
@@ -35,7 +48,7 @@ export default function PostsScreen() {
           onPress={() => {
             navigation.navigate(
               "Comments",
-              { photoSource: item.photoSource }
+              { photoSource: item.photo }
             )
           }}
         >

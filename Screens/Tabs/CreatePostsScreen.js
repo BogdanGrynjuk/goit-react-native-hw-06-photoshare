@@ -88,12 +88,10 @@ export default function CreatePostsScreen({ }) {
     const photo = await uploadPhotoToServer();
 
     try {
-      const docRef = await addDoc(collection(db, "posts"), {
+      await addDoc(collection(db, "posts"), {
         photo, label, place, location, userId, login
       });
-      
-      console.log('Document written with ID: ', docRef.id);
-      
+            
     } catch (error) {
       console.error("Error adding document: ", error);
     }
