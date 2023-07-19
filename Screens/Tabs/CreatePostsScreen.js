@@ -96,21 +96,24 @@ export default function CreatePostsScreen({ }) {
       console.error("Error adding document: ", error);
     }
   };
+  const onClearCamera = () => {
+    setPhotoSource(null);    
+    setLocation(null);
+    setIsPreview(false);  
+  }
 
-  const onDelete = () => {
+  const onClearData = () => {
     Keyboard.dismiss();
     setLabel("");
     setPlace("");
-    setPhotoSource(null);    
-    setLocation(null);
-    setIsPreview(false);    
+    onClearCamera();   
   };
 
   const onSubmit = () => {
-    onDelete();
+    onClearData();
     if (hasPermissionPublish) {
       uploadPostToServer()
-      onDelete();
+      onClearData();
       navigation.navigate("Posts", {label, place, photoSource, location})      
     }
   };  
@@ -125,23 +128,16 @@ export default function CreatePostsScreen({ }) {
       <View style={styles.photoContent}>
         {/* camera */}
         <View style={styles.cameraContainer}>
+          
           {isFocused &&
             <Camera
               style={styles.camera}
               ref={setCameraRef}
               flashMode={FlashMode.auto}
               AutoFocus={AutoFocus.on}
-            >              
-              <TouchableOpacity
-                style={styles.btnSnapshot}
-                activeOpacity={0.8}
-                onPress={takePhoto}               
-              >
-                <MaterialIcons name="photo-camera" size={30} color={"#BDBDBD"} />
-              </TouchableOpacity>
-                
-            </Camera>
+            />
           }
+
           {isPreview &&
             <View style={styles.previewPhotoContainer}>
               <Image
@@ -152,16 +148,23 @@ export default function CreatePostsScreen({ }) {
                   resizeMode: "cover"
                 }}
               />
-            </View>
-            
+            </View>           
           }
+
+          <TouchableOpacity
+            style={{ ...styles.btnSnapshot,  backgroundColor: isPreview ? "rgba(255, 255, 255, 0.30)" : "#FFFFFF"}}
+            activeOpacity={0.8}
+            onPress={!isPreview ? takePhoto : onClearCamera}               
+          >
+            <MaterialIcons name="photo-camera" size={30} color={isPreview ? "#FFFFFF": "#BDBDBD"} />
+          </TouchableOpacity>
         </View>
-        {/* uploader */}
+        {/* action instructions */}
         <TouchableOpacity
-          style={styles.uploader}
+          style={styles.action}
           activeOpacity={0.8}
         >
-          <Text style={styles.uploaderText}>Завантажте фото</Text>
+          <Text style={styles.actionText}>{photoSource ? "Редагувати фото" :"Завантажте фото"}</Text>
         </TouchableOpacity>
 
       </View>
@@ -230,7 +233,7 @@ export default function CreatePostsScreen({ }) {
           backgroundColor: "#F6F6F6"
         }}
         activeOpacity={0.8}
-        onPress={onDelete}
+        onPress={onClearData}
       >
         <Feather name="trash-2" size={24} color="#BDBDBD" />
       </TouchableOpacity>
@@ -254,6 +257,9 @@ const styles = StyleSheet.create({
   },
 
   cameraContainer: {
+    position: "relative",
+     justifyContent: "center",
+    alignItems: "center",
     width: "100%",
     height: 240,
     backgroundColor: "#F6F6F6",
@@ -264,11 +270,8 @@ const styles = StyleSheet.create({
   },
 
   camera: {
-    position: "relative",
     width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
+    height: "100%",   
   },
 
   previewPhotoContainer: {
@@ -284,15 +287,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 50,
-    backgroundColor: "#FFFFFF",
-
   },
 
-  uploader: {
+  action: {
     marginTop: 8,    
   },
 
-  uploaderText: {
+  actionText: {
     fontFamily: "Roboto-Regular",
     fontSize: 16,
     fontWeight: 400,
