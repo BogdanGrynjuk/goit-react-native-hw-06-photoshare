@@ -19,7 +19,11 @@ export default function PostsScreen() {
       const snapshot = await getDocs(collection(db, 'posts'));
       snapshot.forEach((doc) => allPosts.push({ ...doc.data(), id: doc.id }));
 
-      setPosts(allPosts);
+      const sortedPostsByDate = allPosts.sort(
+        (firstPost, secondPost) => firstPost.date - secondPost.date
+      );
+
+      setPosts(sortedPostsByDate);
     } catch (error) {
       console.log(error);
     }

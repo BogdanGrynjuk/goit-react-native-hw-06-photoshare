@@ -61,16 +61,11 @@ const renderItem = ({ item }) => (
 export default function CommentsScreen() {
   const { params: { photoSource, idPost } } = useRoute();
   const [comment, setComment] = useState('');
-  const [allComments, setAllComments] = useState([]);
-  const [counterComments, setCounterComments] = useState(0);  
+  const [allComments, setAllComments] = useState([]); 
 
   useEffect(() => {
     getComments();
-  }, []);
-  
-  useEffect(() => {
-    getComments();
-  }, [counterComments]);
+  }, []);  
 
   const { login } = useSelector(state => state.auth);  
   
@@ -88,8 +83,8 @@ export default function CommentsScreen() {
   };
     
   const getComments = async () => {
-    const comments = [];
     try {
+      const comments = [];
       const refPost = doc(db, "posts", idPost);
 
       const snapshot = await getDocs(collection(refPost, 'comments'));
@@ -100,7 +95,6 @@ export default function CommentsScreen() {
       );
 
       setAllComments(sortedCommentsByDate);
-      setCounterComments(comments.length);
     } catch (error) {
       console.log(error);
     }

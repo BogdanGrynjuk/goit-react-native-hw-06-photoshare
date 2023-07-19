@@ -85,22 +85,24 @@ export default function CreatePostsScreen({ }) {
   };
 
   const uploadPostToServer = async () => {
+    const date = new Date().getTime();
     const photo = await uploadPhotoToServer();
 
     try {
       await addDoc(collection(db, "posts"), {
-        photo, label, place, location, userId, login
+        date, photo, label, place, location, userId, login
       });
             
     } catch (error) {
       console.error("Error adding document: ", error);
     }
   };
+
   const onClearCamera = () => {
-    setPhotoSource(null);    
+    setPhotoSource(null);
     setLocation(null);
-    setIsPreview(false);  
-  }
+    setIsPreview(false);
+  };
 
   const onClearData = () => {
     Keyboard.dismiss();
@@ -112,9 +114,9 @@ export default function CreatePostsScreen({ }) {
   const onSubmit = () => {
     onClearData();
     if (hasPermissionPublish) {
-      uploadPostToServer()
+      uploadPostToServer();
       onClearData();
-      navigation.navigate("Posts", {label, place, photoSource, location})      
+      navigation.navigate("Posts");      
     }
   };  
 
