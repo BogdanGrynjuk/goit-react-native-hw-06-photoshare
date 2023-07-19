@@ -1,5 +1,5 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
 
 import { Feather } from '@expo/vector-icons';
@@ -25,11 +25,10 @@ export default function PostsScreen() {
     }
   };
   
+  const isFocused = useIsFocused();
   const navigation = useNavigation();
 
-  useEffect(() => {
-    getPosts();
-  }, [posts]);
+  { isFocused && getPosts() };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={1} style={styles.post}>
@@ -48,7 +47,7 @@ export default function PostsScreen() {
           onPress={() => {
             navigation.navigate(
               "Comments",
-              { photoSource: item.photo }
+              { photoSource: item.photo, idPost: item.id }
             )
           }}
         >
@@ -87,7 +86,8 @@ export default function PostsScreen() {
       <View style={styles.posts}>
         <FlatList
           data={posts}
-          keyExtractor={(item, index) => index.toString()}
+          // keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
           inverted={true}
         />        

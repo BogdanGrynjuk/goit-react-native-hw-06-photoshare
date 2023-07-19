@@ -4,13 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC6UUbXYeQpqn-MdX2S9CwHmgGK7WgatLM",
-  authDomain: "photo-share-5ef7b.firebaseapp.com",
-  projectId: "photo-share-5ef7b",
-  storageBucket: "photo-share-5ef7b.appspot.com",
-  messagingSenderId: "475942853037",
-  appId: "1:475942853037:web:751deb966d339e1afc6924",
-  measurementId: "G-0FVCB1WWXG"
+  apiKey: "AIzaSyCiAU5b520IHedK8d-mBB1x78gT0fymv-w",
+  authDomain: "app-photo-share.firebaseapp.com",
+  projectId: "app-photo-share",
+  storageBucket: "app-photo-share.appspot.com",
+  messagingSenderId: "433616920331",
+  appId: "1:433616920331:web:efbfa68563989b8e11cc0e",
+  measurementId: "G-N2GS5QPBCR"
 };
 
 const app = initializeApp(firebaseConfig);
