@@ -61,13 +61,17 @@ const renderItem = ({ item }) => (
 export default function CommentsScreen() {
   const { params: { photoSource, idPost } } = useRoute();
   const [comment, setComment] = useState('');
-  const [allComments, setAllComments] = useState([]); 
-
+  const [allComments, setAllComments] = useState([]);
+  const { login } = useSelector(state => state.auth);  
+  
   useEffect(() => {
     getComments();
-  }, []);  
-
-  const { login } = useSelector(state => state.auth);  
+    const timerId = setInterval(() => {
+      getComments();
+    }, 60000);
+   
+    return () => clearInterval(timerId);
+  }, []);
   
   const createComment = async () => {
     const date = new Date().getTime();
@@ -95,6 +99,7 @@ export default function CommentsScreen() {
       );
 
       setAllComments(sortedCommentsByDate);
+      console.log("4444")
     } catch (error) {
       console.log(error);
     }
@@ -103,7 +108,8 @@ export default function CommentsScreen() {
   const addComment = () => {
     Keyboard.dismiss();
     createComment();    
-    setComment('');    
+    getComments();
+    setComment('');
   };
   
   return (
@@ -146,8 +152,7 @@ export default function CommentsScreen() {
         </View>
 
       </View>
-    </KeyboardAvoidingView>
-    
+    </KeyboardAvoidingView>  
     
   );
 };
@@ -160,7 +165,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     paddingHorizontal: 16,
     justifyContent: "flex-end"
-    
   },
 
   photoContainer: {
@@ -178,7 +182,7 @@ const styles = StyleSheet.create({
   },
 
   commentsContainer: {
-    flex: 1,    
+    flex: 1,
   },
 
   commentContainer: {
@@ -200,7 +204,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 6,
     borderTopLeftRadius: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.03)" 
+    backgroundColor: "rgba(0, 0, 0, 0.03)"
   },
 
   commentText: {
@@ -221,13 +225,13 @@ const styles = StyleSheet.create({
   input: {
     padding: 16,
     paddingRight: 60,
-    marginBottom: 16,    
+    marginBottom: 16,
     textAlign: 'left',
     fontFamily: "Roboto-Regular",
     fontSize: 16,
     color: "#212121",
     backgroundColor: "#F6F6F6",
-    borderWidth: 1,   
+    borderWidth: 1,
     borderRadius: 50,
     borderColor: "#E8E8E8"
   },
@@ -242,7 +246,6 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: "center",
     alignItems: "center"
-  }
+  },
 
-
-})
+});
