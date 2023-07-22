@@ -22,8 +22,8 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { authSignOutUser } from '../../redux/auth/authOpration';
   
 export default function ProfileScreen() {
-  const { login, userId } = useSelector(state => state.auth);
-  const [userPosts, setUserPosts] = useState();
+  const { login, userId, avatar } = useSelector(state => state.auth);
+  const [userPosts, setUserPosts] = useState([]);
 
   // useEffect(() => {
   //   getUserPosts();
@@ -99,10 +99,7 @@ export default function ProfileScreen() {
       </View>
 
     </TouchableOpacity>
-  );  
-
-
-  
+  );    
   
   return (
     <View style={styles.container}>
@@ -114,13 +111,31 @@ export default function ProfileScreen() {
 
         <View style={styles.wrapper}>
 
+          
           <View style={styles.avatar}>
+            
+            <View style={{
+              borderRadius: 16,
+              overflow: "hidden"
+            }}>
+
+            {avatar && <Image source={{ uri: avatar }}
+              style={{
+                height: "100%",
+                width: "100%",
+                resizeMode: "cover"
+              }} />}
+            </View>
             <TouchableHighlight
               style={styles.avatarBtn}
               activeOpacity={0.8}
               underlayColor="#ffffff"
+              
             >
-              <Feather name="x-circle" size={25} color="#BDBDBD" />
+              {avatar
+                ? <Feather name="x-circle" size={25} color="#BDBDBD" />
+                : <Feather name="plus-circle" size={25} color="#FF6C00" />
+              }
             </TouchableHighlight>
           </View>
 

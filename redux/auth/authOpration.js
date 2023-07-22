@@ -12,11 +12,11 @@ import { auth } from '../../firebase/config';
 
 const { updateUserProfile, authStateChange, authSignOut  } = authActions;
 
-export const authSignUpUser = ({ email, password, login }) =>
+export const authSignUpUser = ({ email, password, login, avatar }) =>
   async (dispatch, getState) => {
     try {           
       await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(auth.currentUser, { displayName: login });
+      await updateProfile(auth.currentUser, { displayName: login, photoURL: avatar });
             
       const user = auth.currentUser;      
 
@@ -24,7 +24,8 @@ export const authSignUpUser = ({ email, password, login }) =>
         dispatch(updateUserProfile({
           userId: user.uid,
           login: user.displayName,
-          email: user.email
+          email: user.email,
+          avatar: user.photoURL
         }));
       };
         
@@ -42,8 +43,10 @@ export const authSignInUser = ({ email, password }) =>
           dispatch(updateUserProfile({
             userId: user.uid,
             login: user.displayName,
-            email: user.email
+            email: user.email,
+            avatar: user.photoURL
           }));
+
           Alert.alert(`Ласкаво просимо ${user.displayName}`)
         });
     } catch (error) {
@@ -70,7 +73,8 @@ export const authStateChangeUser = () =>
         dispatch(updateUserProfile({
           userId: user.uid,
           login: user.displayName,
-          email: user.email
+          email: user.email,
+          avatar: user.photoURL
         }));
         dispatch(authStateChange({ stateChange: true }));        
       };

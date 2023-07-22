@@ -1,16 +1,30 @@
-import React, { useState } from "react";
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import React, { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
 
 import { Feather } from '@expo/vector-icons';
 import { useSelector } from "react-redux";
 
-import { collection, getDocs } from 'firebase/firestore'; 
+import { collection, getDocs, doc } from 'firebase/firestore'; 
 import { db } from '../../firebase/config';
 
 export default function PostsScreen() {
-  const {login, email} = useSelector(state => state.auth)
-  const [posts, setPosts] = useState([]);
+  const {login, email, avatar} = useSelector(state => state.auth)
+  const [posts, setPosts] = useState([]); 
+
+  useEffect(() => {
+    getPosts();
+
+    const timerId = setInterval(() => {
+      
+      getPosts();
+      
+    }, 6000);
+   
+    return () => clearInterval(timerId);
+    
+  }, []);
+
 
   const getPosts = async () => {
     try {
@@ -28,11 +42,23 @@ export default function PostsScreen() {
       console.log(error);
     }
   };
-  
-  const isFocused = useIsFocused();
-  const navigation = useNavigation();
 
-  { isFocused && getPosts() };
+  // const getNumberOfComments = async () => {
+  //   try {
+  //     const comments = [];
+  //     const refPost = doc(db, "posts", idPost);
+
+  //     const snapshot = await getDocs(collection(refPost, 'comments'));
+  //     snapshot.forEach((doc) => comments.push({ ...doc.data() }));
+      
+  //     setCounterComments(comments.length);      
+      
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };  
+  
+  const navigation = useNavigation();  
 
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={1} style={styles.post}>
@@ -80,7 +106,15 @@ export default function PostsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.wrapPhoto}></View>
+        <View style={styles.wrapPhoto}>
+          {avatar && <Image source={{ uri: avatar }}
+            style={{
+              height: "100%",
+              width: "100%",
+              resizeMode: "cover"
+            }} />}
+          
+        </View>
         <View>
           <Text style={styles.textName}>{login}</Text>
           <Text style={styles.textEmail}>{email}</Text>
@@ -90,16 +124,15 @@ export default function PostsScreen() {
       <View style={styles.posts}>
         <FlatList
           data={posts}
-          // keyExtractor={(item, index) => index.toString()}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           inverted={true}
-        />        
+        />
 
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -122,6 +155,7 @@ const styles = StyleSheet.create({
     height: 60,
     backgroundColor: "#F6F6F6",
     borderRadius: 16,
+    overflow: "hidden"
   },
 
   textName: {

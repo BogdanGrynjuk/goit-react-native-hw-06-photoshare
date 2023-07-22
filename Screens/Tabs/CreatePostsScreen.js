@@ -121,7 +121,7 @@ export default function CreatePostsScreen({ }) {
   };  
 
   if (hasPermission === null) { return <View /> };
-  if (hasPermission === false) { return <Text>Permission to access the camera or location was denied  activeOpacity</Text> };
+  if (hasPermission === false) { return <Text>Permission to access the camera or location was denied</Text> };
 
   return (
 
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
 
   cameraContainer: {
     position: "relative",
-     justifyContent: "center",
+    justifyContent: "center",
     alignItems: "center",
     width: "100%",
     height: 240,

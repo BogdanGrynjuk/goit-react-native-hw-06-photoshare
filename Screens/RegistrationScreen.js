@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from "react-redux";
+import * as ImagePicker from 'expo-image-picker';
 
 import {
   StyleSheet,
@@ -13,33 +14,92 @@ import {
   TextInput,
   TouchableHighlight,
   TouchableOpacity,
+  Image,
 } from "react-native";
 
 import { Feather } from '@expo/vector-icons';
 
 import { authSignUpUser } from "../redux/auth/authOpration";
+import { nanoid } from "@reduxjs/toolkit";
+import { storage, } from "../firebase/config";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 export default function RegistrationScreen() {
 
   const [login, setLogin] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [avatar, setAvatar] = useState(null);
+  const [avatarId, setAvatarId] = useState(null);
+  const [hasGalleryPermission, setHasGalleryPermission] = useState(null);
   
   const [isFocusedLogin, setIsFocusedLogin] = useState(false);
   const [isFocusedEmail, setIsFocusedEmail] = useState(false);
   const [isFocusedPassword, setIsFocusedPassword] = useState(false);
   const [isVisiblePassword, setIsVisiblePassword] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      const gallery = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      setHasGalleryPermission(gallery.status === "granted");
+    })();
+  }, []);  
+
   const navigation = useNavigation();
   const dispatch = useDispatch();
+
+  const pickAvatar =  async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    
+    if (!result.canceled) {
+      delete result.cancelled;
+      return result.assets[0].uri;
+    };
+  };
+
+  const uploadAvatarToServer = async () => {
+    let avatarUrl = await pickAvatar();
+    
+    const response = await fetch(avatarUrl);
+    const file = await response.blob();
+    const uniqueAvatarId = nanoid();
+    setAvatarId(uniqueAvatarId)
+    const storageRef = ref(storage, `avatarImage/${uniqueAvatarId}`);
+
+    await uploadBytes(storageRef, file);
+    await getDownloadURL(storageRef).then((url) => {
+      avatarUrl = url;
+    });
+    
+    setAvatar(avatarUrl)
+  };
+
+  const deleteAvatarfromServer = async () => {    
+    const storageRef = ref(storage, `avatarImage/${avatarId}`);
+    await deleteObject(storageRef);
+    setAvatar(null);    
+  }
+
+  const clearAvatar = () => {
+    setAvatar(null);
+  }
   
   const onSubmit = () => {
-    setLogin("")
+    
+    setLogin("");
     setEmail("");
     setPassword("");
     Keyboard.dismiss();    
-    dispatch(authSignUpUser({ email, password, login }));
+    dispatch(authSignUpUser({ email, password, login, avatar, avatarId }));
   };
+
+  if (hasGalleryPermission === null) { return <View /> };
+  if (hasGalleryPermission === false) { return <Text>Permission to access the gallery was denied</Text> };
   
   return (
     <View style={styles.container}>
@@ -52,12 +112,29 @@ export default function RegistrationScreen() {
         <View style={styles.wrapper}>
 
           <View style={styles.avatar}>
+            
+            <View style={{
+              borderRadius: 16,
+              overflow: "hidden"
+            }}>
+
+            {avatar && <Image source={{ uri: avatar }}
+              style={{
+                height: "100%",
+                width: "100%",
+                resizeMode: "cover"
+              }} />}
+            </View>
             <TouchableHighlight
               style={styles.avatarBtn}
               activeOpacity={0.8}
               underlayColor="#ffffff"
+              onPress={!avatar ? uploadAvatarToServer : deleteAvatarfromServer}
             >
-              <Feather name="plus-circle" size={25} color="#FF6C00" />
+              {avatar
+                ? <Feather name="x-circle" size={25} color="#BDBDBD" />
+                : <Feather name="plus-circle" size={25} color="#FF6C00" />
+              }
             </TouchableHighlight>
           </View>
            
@@ -126,7 +203,7 @@ export default function RegistrationScreen() {
                   <Text style={styles.btnToggleText}>Показати</Text>
                 </TouchableOpacity>
               </View>
-            </KeyboardAvoidingView>              
+            </KeyboardAvoidingView>
             {/* btn sign up */}
             <TouchableOpacity
               style={styles.btn}
@@ -144,7 +221,7 @@ export default function RegistrationScreen() {
               <Text style={styles.linkText}>
                 Вже є акаунт? Увійти
               </Text>
-            </TouchableOpacity>            
+            </TouchableOpacity>
           </View>
         </View>
       </ImageBackground>
@@ -181,6 +258,7 @@ const styles = StyleSheet.create({
     marginTop: -60,
     backgroundColor: '#F6F6F6',
     borderRadius: 16,
+    
   },
 
   avatarBtn: {

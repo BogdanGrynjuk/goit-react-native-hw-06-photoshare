@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useRoute, useIsFocused } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
 import {
   View,
   StyleSheet,
@@ -48,21 +48,11 @@ const convertDateToString = (number) => {
   return resultString;
 };
 
-const renderItem = ({ item }) => (
-  <TouchableOpacity activeOpacity={1} style={styles.commentContainer}>
-    <View style={styles.avatar}></View>
-    <View style={styles.commentInfo}>
-      <Text style={styles.commentText}>{item.comment}</Text>
-      <Text style={styles.commentDate}>{convertDateToString(item.date)}</Text>
-    </View>
-  </TouchableOpacity>
-);
-
 export default function CommentsScreen() {
   const { params: { photoSource, idPost } } = useRoute();
   const [comment, setComment] = useState('');
-  const [allComments, setAllComments] = useState([]);
-  const { login } = useSelector(state => state.auth);  
+  const [allComments, setAllComments] = useState([]);  
+  const { login, avatar, userId } = useSelector(state => state.auth);  
   
   useEffect(() => {
     getComments();
@@ -78,9 +68,10 @@ export default function CommentsScreen() {
     try {
       
       const refPost = doc(db, "posts", idPost);
-      await addDoc(collection(refPost, "comments"), {
-        date, login, comment
-      });      
+      
+       await addDoc(collection(refPost, "comments"), {
+        date, login, comment, avatar, userId
+      }); 
     } catch (error) {
       console.error("Error adding document: ", error);
     }
@@ -99,7 +90,7 @@ export default function CommentsScreen() {
       );
 
       setAllComments(sortedCommentsByDate);
-      console.log("4444")
+      
     } catch (error) {
       console.log(error);
     }
@@ -111,6 +102,31 @@ export default function CommentsScreen() {
     getComments();
     setComment('');
   };
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity activeOpacity={1} style={{
+      ...styles.commentContainer,
+      flexDirection: (item.userId === userId) ? "row-reverse" : "row",
+    }}>
+      <View style={styles.avatar}>
+        <Image source={{ uri: item.avatar }} style={{ width: "100%", height: "100%", resizeMode: "cover" }} />
+      </View>
+      <View style={{
+        ...styles.commentInfo,
+        borderTopLeftRadius: (item.userId === userId) ? 6 : 0,
+        borderTopRightRadius: (item.userId === userId) ? 0 : 6
+      }}>
+        <Text style={styles.commentText}>{item.comment}</Text>
+        <Text style={{
+          ...styles.commentDate,
+          textAlign: (item.userId === userId) ? "left" : "right",
+        }}>
+          {convertDateToString(item.date)}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   
   return (
     <KeyboardAvoidingView 
@@ -185,8 +201,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  commentContainer: {
-    flexDirection: "row",
+  commentContainer: {    
     gap: 16,
     marginBottom: 24
   },
@@ -196,6 +211,7 @@ const styles = StyleSheet.create({
     height: 28,
     backgroundColor: "blue",
     borderRadius: 50,
+    overflow: "hidden"
   },
 
   commentInfo: {
@@ -217,7 +233,6 @@ const styles = StyleSheet.create({
 
   commentDate: {
     color: "#BDBDBD",
-    textAlign: "right",
     fontFamily: "Roboto-Regular",
     fontSize: 10,
   },
