@@ -82,3 +82,44 @@ export const authStateChangeUser = () =>
     });
   };
 
+export const authDeleteUserAvatar = () =>
+  async (dispatch, getState) => {
+    try {
+      await updateProfile(auth.currentUser, { photoURL: "" });
+      const user = auth.currentUser;
+      
+      if (user) {
+        dispatch(updateUserProfile({
+          userId: user.uid,
+          login: user.displayName,
+          email: user.email,
+          avatar: user.photoURL
+        }));
+      };
+        
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+export const authUpdateUserAvatar = ({ avatarUrl }) =>
+  async (dispatch, getState) => {
+    try {
+      await updateProfile(auth.currentUser, { photoURL: avatarUrl });
+      const user = auth.currentUser;
+      
+      if (user) {
+        dispatch(updateUserProfile({
+          userId: user.uid,
+          login: user.displayName,
+          email: user.email,
+          avatar: user.photoURL
+        }));
+      };
+        
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+

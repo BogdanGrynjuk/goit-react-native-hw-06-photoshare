@@ -4,6 +4,7 @@ const state = {
   userId: null,
   login: null,
   email: null,
+  avatar: null,
   stateChange: false,
 };
 

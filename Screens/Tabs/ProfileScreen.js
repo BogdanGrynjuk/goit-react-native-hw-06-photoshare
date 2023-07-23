@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { db } from '../../firebase/config';
+import * as ImagePicker from 'expo-image-picker';
 
 import {
   StyleSheet,
@@ -17,10 +18,13 @@ import {
 // import icons
 import { Feather } from '@expo/vector-icons';
 
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 
-import { authSignOutUser } from '../../redux/auth/authOpration';
-  
+import { authUpdateUserAvatar, authSignOutUser, authDeleteUserAvatar } from '../../redux/auth/authOpration';
+import { nanoid } from "@reduxjs/toolkit";
+import { storage, } from "../../firebase/config";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+
 export default function ProfileScreen() {
   const { login, userId, avatar } = useSelector(state => state.auth);
   const [userPosts, setUserPosts] = useState([]);
@@ -28,6 +32,78 @@ export default function ProfileScreen() {
   // useEffect(() => {
   //   getUserPosts();
   // }, []);
+
+  const pickAvatar =  async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    
+    if (!result.canceled) {
+      delete result.cancelled;
+      return result.assets[0].uri;
+    };
+  };
+
+  const uploadAvatarToServer = async () => {
+    let avatarUrl = await pickAvatar();
+    
+    const response = await fetch(avatarUrl);
+    const file = await response.blob();
+    const uniqueAvatarId = nanoid();
+    
+    const storageRef = ref(storage, `avatarImage/${uniqueAvatarId}`);
+
+    await uploadBytes(storageRef, file);
+    await getDownloadURL(storageRef).then((url) => {
+      avatarUrl = url;
+    });   
+
+    const snapshotPosts = await getDocs(collection(db, 'posts'));    
+        
+    snapshotPosts.forEach(async (post) => {
+      const refPost = doc(db, "posts", post.id);
+      
+      const snapshotComments = await getDocs(collection(refPost, 'comments'));
+      
+      snapshotComments.forEach(async (comment) => {
+        const refComment = doc(refPost, "comments", comment.id);
+        
+        if (comment.data().userId === userId) {
+          await updateDoc(refComment, { avatar: avatarUrl });
+          
+        };
+      })
+    })
+    
+    
+    dispatch(authUpdateUserAvatar({ avatarUrl }));
+  };
+
+ 
+
+  const clearAvatar = async () => {
+    dispatch(authDeleteUserAvatar());
+
+    const snapshotPosts = await getDocs(collection(db, 'posts'));
+
+    snapshotPosts.forEach(async (post) => {
+      const refPost = doc(db, "posts", post.id);
+      
+      const snapshotComments = await getDocs(collection(refPost, 'comments'));
+      
+      snapshotComments.forEach(async (comment) => {
+        const refComment = doc(refPost, "comments", comment.id);
+        
+        if (comment.data().userId === userId) {
+          await updateDoc(refComment, { avatar: null });
+          console.log('delete');
+        };
+      })
+    })
+  }
+
 
   const getUserPosts = async () => {
     try {
@@ -130,6 +206,7 @@ export default function ProfileScreen() {
               style={styles.avatarBtn}
               activeOpacity={0.8}
               underlayColor="#ffffff"
+              onPress={!avatar ? uploadAvatarToServer : clearAvatar}
               
             >
               {avatar
