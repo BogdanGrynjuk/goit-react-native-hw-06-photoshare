@@ -1,29 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useState, useEffect, useRef } from "react";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
 
 import { Feather } from '@expo/vector-icons';
 import { useSelector } from "react-redux";
 
-import { collection, getDocs, doc } from 'firebase/firestore'; 
+import { collection, getDocs, doc, getCountFromServer } from 'firebase/firestore'; 
 import { db } from '../../firebase/config';
 
 export default function PostsScreen() {
-  const {login, email, avatar} = useSelector(state => state.auth)
-  const [posts, setPosts] = useState([]); 
+  const { login, email, avatar } = useSelector(state => state.auth)
+  const [posts, setPosts] = useState([]);
 
-  useEffect(() => {
-    getPosts();
 
-    const timerId = setInterval(() => {
+  // useEffect(() => {
+  //   getPosts();
+
+  //   const timerId = setInterval(() => {
       
-      getPosts();
+  //     getPosts();
       
-    }, 6000);
+  //   }, 60000);
    
-    return () => clearInterval(timerId);
+  //   return () => clearInterval(timerId);
     
-  }, []);
+  // }, []);
 
 
   const getPosts = async () => {
@@ -43,65 +44,101 @@ export default function PostsScreen() {
     }
   };
 
-  // const getNumberOfComments = async () => {
+  // const getNumberOfComments = async (id) => {
   //   try {
-  //     const comments = [];
-  //     const refPost = doc(db, "posts", idPost);
+  //     const refPost = doc(db, "posts", id);
+  //     const comments = collection(refPost, 'comments');
+  //     const snapshot = await getCountFromServer(comments);
 
-  //     const snapshot = await getDocs(collection(refPost, 'comments'));
-  //     snapshot.forEach((doc) => comments.push({ ...doc.data() }));
-      
-  //     setCounterComments(comments.length);      
+  //     const result = snapshot.data().count;
+  //     return result;
       
   //   } catch (error) {
   //     console.log(error);
   //   }
-  // };  
+  // };
   
-  const navigation = useNavigation();  
+  const ref = useRef();
+  const isFocused = useIsFocused();
+  const navigation = useNavigation();
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity activeOpacity={1} style={styles.post}>
-      {/* photo */}
-      <View style={styles.photoContainer}>
-        <Image source={{ uri: item.photo }} style={styles.photo} />
-      </View>
-      {/* label */}
-      <Text style={styles.postLabel}>{item.label}</Text>
-      {/* links */}
-      <View style={styles.postControls}>
-        {/* link to comments */}
-        <TouchableOpacity
-          style={styles.postLink}
-          activeOpacity={0.8}
-          onPress={() => {
-            navigation.navigate(
-              "Comments",
-              { photoSource: item.photo, idPost: item.id }
-            )
-          }}
-        >
-          <Feather name="message-circle" size={24} color="#BDBDBD" style={{ transform: [{ rotateY: '180deg' }] }} />
-          <Text style={{ ...styles.textLink, color: "#BDBDBD", textDecorationLine: "none" }}>0</Text>
-        </TouchableOpacity>
-        {/* link to map */}
-        <TouchableOpacity
-          style={styles.postLink}
-          activeOpacity={0.8}
-          onPress={() => {
-            navigation.navigate(
-              "Map",
-              { location: item.location, label: item.label, place: item.place }
-            )
-          }}
-        >
-          <Feather name="map-pin" size={24} color="#BDBDBD" />
-          <Text style={styles.textLink}>{item.place}</Text>
-        </TouchableOpacity>
-      </View>
+  { isFocused && getPosts() };
 
-    </TouchableOpacity>
-  );  
+  const renderItem = ({ item }) => {
+    const [counter, setCounter] = useState(0);
+
+    useEffect(() => {getNumberOfComments(item.id)}, [])
+
+    const getNumberOfComments = async (id) => {
+    try {
+      const allComments = [];
+      const refPost = doc(db, "posts", id);
+      
+      const snapshot = await getDocs(collection(refPost, "comments"));
+
+      snapshot.forEach((doc) => allComments.push({ ...doc.data()}))
+
+      setCounter[allComments.length];
+      
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+    return <Text>{counter}</Text>
+
+
+    // getNumberOfComments(item.id);
+    
+    // return (
+    //   <TouchableOpacity activeOpacity={1} style={styles.post}>
+    //     {/* photo */}
+    //     <View style={styles.photoContainer}>
+    //       <Image source={{ uri: item.photo }} style={styles.photo} />
+    //     </View>
+    //     {/* label */}
+    //     <Text style={styles.postLabel}>{item.label}</Text>
+    //     {/* links */}
+    //     <View style={styles.postControls}>
+    //       {/* link to comments */}
+    //       <TouchableOpacity
+    //         style={styles.postLink}
+    //         activeOpacity={0.8}
+    //         onPress={() => {
+    //           navigation.navigate(
+    //             "Comments",
+    //             { photoSource: item.photo, idPost: item.id }
+    //           )
+    //         }}
+    //       >
+    //         <Feather name="message-circle" size={24} color="#BDBDBD" style={{ transform: [{ rotateY: '180deg' }] }} />
+    //         <Text style={{ ...styles.textLink, color: "#BDBDBD", textDecorationLine: "none" }}>0</Text>
+    //       </TouchableOpacity>
+    //       {/* link to map */}
+    //       <TouchableOpacity
+    //         style={styles.postLink}
+    //         activeOpacity={0.8}
+    //         onPress={() => {
+    //           navigation.navigate(
+    //             "Map",
+    //             { location: item.location, label: item.label, place: item.place }
+    //           )
+    //         }}
+    //       >
+    //         <Feather name="map-pin" size={24} color="#BDBDBD" />
+    //         <Text style={styles.textLink}>{item.place}</Text>
+    //       </TouchableOpacity>
+    //     </View>
+
+    //   </TouchableOpacity>
+    // )
+  };
+
+  const handleScrollToEnd = (width, height) => {
+    if (ref.current) {
+      ref.current.scrollToOffset({ offset: height });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -127,8 +164,9 @@ export default function PostsScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           inverted={true}
+          ref={ref}
+          onContentSizeChange={handleScrollToEnd}          
         />
-
       </View>
     </View>
   );

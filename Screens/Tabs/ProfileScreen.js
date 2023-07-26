@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { db } from '../../firebase/config';
@@ -28,10 +28,6 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 export default function ProfileScreen() {
   const { login, userId, avatar } = useSelector(state => state.auth);
   const [userPosts, setUserPosts] = useState([]);
-
-  // useEffect(() => {
-  //   getUserPosts();
-  // }, []);
 
   const pickAvatar =  async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -63,8 +59,8 @@ export default function ProfileScreen() {
     const snapshotPosts = await getDocs(collection(db, 'posts'));    
         
     snapshotPosts.forEach(async (post) => {
-      const refPost = doc(db, "posts", post.id);
-      
+
+      const refPost = doc(db, "posts", post.id);      
       const snapshotComments = await getDocs(collection(refPost, 'comments'));
       
       snapshotComments.forEach(async (comment) => {
@@ -75,13 +71,10 @@ export default function ProfileScreen() {
           
         };
       })
-    })
-    
+    });
     
     dispatch(authUpdateUserAvatar({ avatarUrl }));
-  };
-
- 
+  }; 
 
   const clearAvatar = async () => {
     dispatch(authDeleteUserAvatar());
@@ -98,12 +91,10 @@ export default function ProfileScreen() {
         
         if (comment.data().userId === userId) {
           await updateDoc(refComment, { avatar: null });
-          console.log('delete');
         };
       })
     })
-  }
-
+  };
 
   const getUserPosts = async () => {
     try {
@@ -122,12 +113,13 @@ export default function ProfileScreen() {
       console.log(error);
     } 
   };
+
   const isFocused = useIsFocused();
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const refFlatList = useRef();
 
   { isFocused && getUserPosts() };
-
-  const dispatch = useDispatch();
 
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={1} style={styles.post}>
@@ -150,6 +142,7 @@ export default function ProfileScreen() {
             )
           }}
         >
+          
           <Feather name="message-circle" size={24} color="#BDBDBD" style={{ transform: [{ rotateY: '180deg' }] }} />
           <Text style={{ ...styles.textLink, color: "#BDBDBD", textDecorationLine: "none" }}>0</Text>
         </TouchableOpacity>
@@ -175,7 +168,13 @@ export default function ProfileScreen() {
       </View>
 
     </TouchableOpacity>
-  );    
+  );
+  
+  const handleScrollToEnd = (width, height) => {
+    if (refFlatList.current) {
+      refFlatList.current.scrollToOffset({ offset: height });
+    }
+  };
   
   return (
     <View style={styles.container}>
@@ -233,14 +232,14 @@ export default function ProfileScreen() {
             data={userPosts}            
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
-            inverted={true}
+              inverted={true}
+              ref={refFlatList}
+              onContentSizeChange={handleScrollToEnd}
           />
 
         </View>
 
-        </View>
-
-        
+        </View>        
 
       </ImageBackground>
       
@@ -313,8 +312,8 @@ const styles = StyleSheet.create({
   },
   
   posts: {
-    flex:1,
-    paddingTop: 32,
+    // flex:1,
+    // paddingTop: 32,
   },
 
    post: {

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useRoute } from "@react-navigation/native";
+import { useState, useRef } from "react";
+import { useIsFocused, useRoute } from "@react-navigation/native";
 import {
   View,
   StyleSheet,
@@ -52,7 +52,12 @@ export default function CommentsScreen() {
   const { params: { photoSource, idPost } } = useRoute();
   const [comment, setComment] = useState('');
   const [allComments, setAllComments] = useState([]);  
-  const { login, avatar, userId } = useSelector(state => state.auth);  
+  const { login, avatar, userId } = useSelector(state => state.auth);
+  
+  const ref = useRef();
+  // const isFocused = useIsFocused();
+
+  // {isFocused && getComments()}
   
   useEffect(() => {
     getComments();
@@ -65,11 +70,10 @@ export default function CommentsScreen() {
   
   const createComment = async () => {
     const date = new Date().getTime();
-    try {
-      
+    try {      
       const refPost = doc(db, "posts", idPost);
       
-       await addDoc(collection(refPost, "comments"), {
+      await addDoc(collection(refPost, "comments"), {
         date, login, comment, avatar, userId
       }); 
     } catch (error) {
@@ -103,6 +107,12 @@ export default function CommentsScreen() {
     setComment('');
   };
 
+  const handleScrollToEnd = (width, height) => {
+    if (ref.current) {
+      ref.current.scrollToOffset({ offset: height });
+    }
+  };
+
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={1} style={{
       ...styles.commentContainer,
@@ -126,7 +136,6 @@ export default function CommentsScreen() {
       </View>
     </TouchableOpacity>
   );
-
   
   return (
     <KeyboardAvoidingView 
@@ -145,6 +154,8 @@ export default function CommentsScreen() {
             data={allComments}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
+            ref={ref}
+            onContentSizeChange={handleScrollToEnd} 
           />
         </View>
 
