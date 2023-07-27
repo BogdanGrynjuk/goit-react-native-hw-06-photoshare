@@ -1,30 +1,28 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
 
 import { Feather } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+
 import { useSelector } from "react-redux";
 
-import { collection, getDocs, doc, getCountFromServer } from 'firebase/firestore'; 
+import { collection, getDocs, doc } from 'firebase/firestore'; 
 import { db } from '../../firebase/config';
 
 export default function PostsScreen() {
   const { login, email, avatar } = useSelector(state => state.auth)
   const [posts, setPosts] = useState([]);
 
+  useEffect(() => {
+    getPosts();
 
-  // useEffect(() => {
-  //   getPosts();
-
-  //   const timerId = setInterval(() => {
-      
-  //     getPosts();
-      
-  //   }, 60000);
+    const timerId = setInterval(() => {      
+      getPosts();      
+    }, 30000);
    
-  //   return () => clearInterval(timerId);
-    
-  // }, []);
+    return () => clearInterval(timerId);    
+  }, []);
 
 
   const getPosts = async () => {
@@ -43,95 +41,85 @@ export default function PostsScreen() {
       console.log(error);
     }
   };
-
-  // const getNumberOfComments = async (id) => {
-  //   try {
-  //     const refPost = doc(db, "posts", id);
-  //     const comments = collection(refPost, 'comments');
-  //     const snapshot = await getCountFromServer(comments);
-
-  //     const result = snapshot.data().count;
-  //     return result;
-      
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-  
+    
   const ref = useRef();
-  const isFocused = useIsFocused();
   const navigation = useNavigation();
 
-  { isFocused && getPosts() };
+  const renderItem = ({ item }) => <Post item={item} />
 
-  const renderItem = ({ item }) => {
+  const Post = ({ item }) => {
     const [counter, setCounter] = useState(0);
 
-    useEffect(() => {getNumberOfComments(item.id)}, [])
-
-    const getNumberOfComments = async (id) => {
-    try {
-      const allComments = [];
-      const refPost = doc(db, "posts", id);
-      
-      const snapshot = await getDocs(collection(refPost, "comments"));
-
-      snapshot.forEach((doc) => allComments.push({ ...doc.data()}))
-
-      setCounter[allComments.length];
-      
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-    return <Text>{counter}</Text>
-
-
-    // getNumberOfComments(item.id);
+    useEffect(() => {
+      getNumberOfComments(item.id);
+    }, []);
     
-    // return (
-    //   <TouchableOpacity activeOpacity={1} style={styles.post}>
-    //     {/* photo */}
-    //     <View style={styles.photoContainer}>
-    //       <Image source={{ uri: item.photo }} style={styles.photo} />
-    //     </View>
-    //     {/* label */}
-    //     <Text style={styles.postLabel}>{item.label}</Text>
-    //     {/* links */}
-    //     <View style={styles.postControls}>
-    //       {/* link to comments */}
-    //       <TouchableOpacity
-    //         style={styles.postLink}
-    //         activeOpacity={0.8}
-    //         onPress={() => {
-    //           navigation.navigate(
-    //             "Comments",
-    //             { photoSource: item.photo, idPost: item.id }
-    //           )
-    //         }}
-    //       >
-    //         <Feather name="message-circle" size={24} color="#BDBDBD" style={{ transform: [{ rotateY: '180deg' }] }} />
-    //         <Text style={{ ...styles.textLink, color: "#BDBDBD", textDecorationLine: "none" }}>0</Text>
-    //       </TouchableOpacity>
-    //       {/* link to map */}
-    //       <TouchableOpacity
-    //         style={styles.postLink}
-    //         activeOpacity={0.8}
-    //         onPress={() => {
-    //           navigation.navigate(
-    //             "Map",
-    //             { location: item.location, label: item.label, place: item.place }
-    //           )
-    //         }}
-    //       >
-    //         <Feather name="map-pin" size={24} color="#BDBDBD" />
-    //         <Text style={styles.textLink}>{item.place}</Text>
-    //       </TouchableOpacity>
-    //     </View>
+    const getNumberOfComments = async (id) => {
+      try {
+        const allComments = [];
 
-    //   </TouchableOpacity>
-    // )
+        const refPost = doc(db, "posts", id);      
+        const snapshot = await getDocs(collection(refPost, "comments"));
+        snapshot.forEach((doc) => allComments.push({ ...doc.data() }))
+
+        setCounter(allComments.length);     
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    
+    return (
+      <TouchableOpacity activeOpacity={1} style={styles.post}>
+        {/* photo */}
+        <View style={styles.photoContainer}>
+          <Image source={{ uri: item.photo }} style={styles.photo} />
+        </View>
+        {/* label */}
+        <Text style={styles.postLabel}>{item.label}</Text>
+        {/* links */}
+        <View style={styles.postControls}>
+          {/* link to comments */}
+          <TouchableOpacity
+            style={styles.postLink}
+            activeOpacity={0.8}
+            onPress={() => {
+              navigation.navigate(
+                "Comments",
+                { photoSource: item.photo, idPost: item.id }
+              )
+            }}
+          >
+            {
+              (counter > 0)
+                ? <FontAwesome name="comment" size={24} color="#FF6C00" style={{ transform: [{ rotateY: '180deg' }] }} />
+                : <FontAwesome name="comment-o" size={24} color="#BDBDBD" style={{ transform: [{ rotateY: '180deg' }] }} />
+            }
+            <Text style={{
+              ...styles.textLink,
+              color: (counter > 0) ? "#212121" : "#BDBDBD",
+              textDecorationLine: "none"
+            }}>
+              {counter}
+            </Text>
+            
+          </TouchableOpacity>
+          {/* link to map */}
+          <TouchableOpacity
+            style={styles.postLink}
+            activeOpacity={0.8}
+            onPress={() => {
+              navigation.navigate(
+                "Map",
+                { location: item.location, label: item.label, place: item.place }
+              )
+            }}
+          >
+            <Feather name="map-pin" size={24} color="#BDBDBD" />
+            <Text style={styles.textLink}>{item.place}</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   const handleScrollToEnd = (width, height) => {
@@ -165,7 +153,7 @@ export default function PostsScreen() {
           renderItem={renderItem}
           inverted={true}
           ref={ref}
-          onContentSizeChange={handleScrollToEnd}          
+          onContentSizeChange={handleScrollToEnd}
         />
       </View>
     </View>
@@ -263,7 +251,4 @@ const styles = StyleSheet.create({
     color: "#212121",
     textDecorationLine: 'underline',
   },
-
-
-
 });

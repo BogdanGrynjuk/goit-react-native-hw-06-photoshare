@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { db } from '../../firebase/config';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -17,13 +17,14 @@ import {
 
 // import icons
 import { Feather } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 
 import { authUpdateUserAvatar, authSignOutUser, authDeleteUserAvatar } from '../../redux/auth/authOpration';
 import { nanoid } from "@reduxjs/toolkit";
 import { storage, } from "../../firebase/config";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function ProfileScreen() {
   const { login, userId, avatar } = useSelector(state => state.auth);
@@ -113,63 +114,101 @@ export default function ProfileScreen() {
       console.log(error);
     } 
   };
-
-  const isFocused = useIsFocused();
+  
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const refFlatList = useRef();
 
-  { isFocused && getUserPosts() };
+  useEffect(() => {
+    getUserPosts();
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity activeOpacity={1} style={styles.post}>
-      {/* photo */}
-      <View style={styles.photoContainer}>
-        <Image source={{ uri: item.photo }} style={styles.photo} />
-      </View>
-      {/* label */}
-      <Text style={styles.postLabel}>{item.label}</Text>
-      {/* links */}
-      <View style={styles.postControls}>
-        {/* link to comments */}
-        <TouchableOpacity
-          style={styles.postLink}
-          activeOpacity={0.8}
-          onPress={() => {
-            navigation.navigate(
-              "Comments",
-              { photoSource: item.photo, idPost: item.id }
-            )
-          }}
-        >
-          
-          <Feather name="message-circle" size={24} color="#BDBDBD" style={{ transform: [{ rotateY: '180deg' }] }} />
-          <Text style={{ ...styles.textLink, color: "#BDBDBD", textDecorationLine: "none" }}>0</Text>
-        </TouchableOpacity>
-        {/* likes */}
-        <View style={styles.postLink}>          
-          <Feather name="thumbs-up" size={24} color="#FF6C00" />
-          <Text style={{ ...styles.textLink, textDecorationLine: "none" }}>200</Text>
+    const timerId = setInterval(() => {      
+      getUserPosts();      
+    }, 30000);
+   
+    return () => clearInterval(timerId);    
+  }, []);
+
+  const renderItem = ({ item }) => <Post item={item} />
+
+  const Post = ({ item }) => {
+    const [counter, setCounter] = useState(0);
+
+    useEffect(() => {
+      getNumberOfComments(item.id);
+    }, []);
+
+    const getNumberOfComments = async (id) => {
+      try {
+        const allComments = [];
+
+        const refPost = doc(db, "posts", id);      
+        const snapshot = await getDocs(collection(refPost, "comments"));
+        snapshot.forEach((doc) => allComments.push({ ...doc.data() }))
+
+        setCounter(allComments.length);     
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    return (
+      <TouchableOpacity activeOpacity={1} style={styles.post}>
+        {/* photo */}
+        <View style={styles.photoContainer}>
+          <Image source={{ uri: item.photo }} style={styles.photo} />
         </View>
-        {/* link to map */}
-        <TouchableOpacity
-          style={{...styles.postLink, flex: 1, justifyContent: "flex-end"}}
-          activeOpacity={0.8}
-          onPress={() => {
-            navigation.navigate(
-              "Map",
-              { location: item.location, label: item.label, place: item.place }
-            )
-          }}
-        >
-          <Feather name="map-pin" size={24} color="#BDBDBD" />
-          <Text style={styles.textLink}>{item.place}</Text>
-        </TouchableOpacity>
-      </View>
+        {/* label */}
+        <Text style={styles.postLabel}>{item.label}</Text>
+        {/* links */}
+        <View style={styles.postControls}>
+          {/* link to comments */}
+          <TouchableOpacity
+            style={styles.postLink}
+            activeOpacity={0.8}
+            onPress={() => {
+              navigation.navigate(
+                "Comments",
+                { photoSource: item.photo, idPost: item.id }
+              )
+            }}
+          >{
+              (counter > 0)
+                ? <FontAwesome name="comment" size={24} color="#FF6C00" style={{ transform: [{ rotateY: '180deg' }] }} />
+                : <FontAwesome name="comment-o" size={24} color="#BDBDBD" style={{ transform: [{ rotateY: '180deg' }] }} />
+            }
+            <Text style={{
+              ...styles.textLink,
+              color: (counter > 0) ? "#212121" : "#BDBDBD",
+              textDecorationLine: "none"
+            }}>
+              {counter}
+            </Text>
+          </TouchableOpacity>
+          {/* likes */}
+          <View style={styles.postLink}>
+            <Feather name="thumbs-up" size={24} color="#FF6C00" />
+            <Text style={{ ...styles.textLink, textDecorationLine: "none" }}>200</Text>
+          </View>
+          {/* link to map */}
+          <TouchableOpacity
+            style={{ ...styles.postLink, flex: 1, justifyContent: "flex-end" }}
+            activeOpacity={0.8}
+            onPress={() => {
+              navigation.navigate(
+                "Map",
+                { location: item.location, label: item.label, place: item.place }
+              )
+            }}
+          >
+            <Feather name="map-pin" size={24} color="#BDBDBD" />
+            <Text style={styles.textLink}>{item.place}</Text>
+          </TouchableOpacity>
+        </View>
 
-    </TouchableOpacity>
-  );
-  
+      </TouchableOpacity>
+    );
+  };
+
   const handleScrollToEnd = (width, height) => {
     if (refFlatList.current) {
       refFlatList.current.scrollToOffset({ offset: height });
@@ -184,8 +223,7 @@ export default function ProfileScreen() {
         style={styles.imageBackground}
       >
 
-        <View style={styles.wrapper}>
-
+        <View style={styles.wrapper}>          
           
           <View style={styles.avatar}>
             
@@ -205,8 +243,7 @@ export default function ProfileScreen() {
               style={styles.avatarBtn}
               activeOpacity={0.8}
               underlayColor="#ffffff"
-              onPress={!avatar ? uploadAvatarToServer : clearAvatar}
-              
+              onPress={!avatar ? uploadAvatarToServer : clearAvatar}              
             >
               {avatar
                 ? <Feather name="x-circle" size={25} color="#BDBDBD" />
@@ -314,6 +351,7 @@ const styles = StyleSheet.create({
   posts: {
     // flex:1,
     // paddingTop: 32,
+    paddingBottom: 64
   },
 
    post: {

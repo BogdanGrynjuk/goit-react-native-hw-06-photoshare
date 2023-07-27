@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useIsFocused, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
 import {
   View,
   StyleSheet,
@@ -55,15 +55,12 @@ export default function CommentsScreen() {
   const { login, avatar, userId } = useSelector(state => state.auth);
   
   const ref = useRef();
-  // const isFocused = useIsFocused();
-
-  // {isFocused && getComments()}
-  
+    
   useEffect(() => {
     getComments();
     const timerId = setInterval(() => {
       getComments();
-    }, 60000);
+    }, 30000);
    
     return () => clearInterval(timerId);
   }, []);
@@ -179,8 +176,7 @@ export default function CommentsScreen() {
         </View>
 
       </View>
-    </KeyboardAvoidingView>  
-    
+    </KeyboardAvoidingView>    
   );
 };
 
